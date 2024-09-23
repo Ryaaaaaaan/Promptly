@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompteur Vocal - TypeScript</title>
+</head>
+<body>
+    <div id="app">
+        <!-- Header avec contrôles -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">🎤 Prompteur Vocal</h1>
+                <div class="controls">
+                    <button id="startBtn" class="control-btn primary">
+                        <span class="btn-icon">🎤</span>
+                        Démarrer
+                    </button>
+                    <button id="stopBtn" class="control-btn secondary" disabled>
+                        <span class="btn-icon">⏹</span>
+                        Arrêter
+                    </button>
+                    <button id="resetBtn" class="control-btn secondary">
+                        <span class="btn-icon">🔄</span>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Zone de configuration du texte -->
+        <div class="text-input-section">
+            <div class="input-container">
+                <label for="textInput" class="input-label">Texte à lire :</label>
+                <textarea
+                    id="textInput"
+                    class="text-input"
+                    placeholder="Collez votre texte ici... Chaque ligne sera une phrase à suivre."
+                    rows="4"
+                ></textarea>
+                <button id="loadTextBtn" class="control-btn primary">Charger le texte</button>
+            </div>
+        </div>
+
+        <!-- Zone principale d'affichage des paroles -->
+        <main class="lyrics-container">
+            <div class="lyrics-wrapper" id="lyricsWrapper">
+                <div class="lyrics-content" id="lyricsContent">
+                    <div class="empty-state">
+                        📝 Chargez un texte pour commencer
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Zone de status et debug -->
+        <div class="status-section">
+            <div class="status-item">
+                <span class="status-label">Status:</span>
+                <span id="statusText" class="status-value">Prêt</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Reconnaissance:</span>
+                <span id="recognitionText" class="status-value">En attente...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Ligne actuelle:</span>
+                <span id="currentLineNumber" class="status-value">0/0</span>
+            </div>
+        </div>
+
+        <!-- Overlay de chargement -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Initialisation de la reconnaissance vocale...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
