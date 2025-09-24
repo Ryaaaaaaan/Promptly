@@ -86,23 +86,226 @@ body::before {
     backdrop-filter: blur(0px);
 }
 
-/* Header pill flottant */
+/* Step Management */
+.step {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.step.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+}
+
+/* Text Input Step */
+.text-input-step {
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.step-container {
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+}
+
+.step-header {
+    margin-bottom: 3rem;
+}
+
+.step-title {
+    font-size: clamp(3rem, 6vw, 5rem);
+    font-weight: 900;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    letter-spacing: -0.04em;
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.8),
+        0 0 20px rgba(255, 255, 255, 0.6),
+        0 0 40px rgba(255, 255, 255, 0.4),
+        0 0 80px rgba(0, 212, 255, 0.6),
+        0 0 120px rgba(0, 212, 255, 0.4);
+    animation: titleGlow 4s ease-in-out infinite alternate;
+    position: relative;
+    display: inline-block;
+}
+
+.step-title::before {
+    content: 'Promptly';
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #ffffff 0%, #e0f2ff 50%, #b3e5ff 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: blur(2px);
+    opacity: 0.8;
+    z-index: -1;
+}
+
+@keyframes titleGlow {
+    0% {
+        text-shadow:
+            0 0 10px rgba(255, 255, 255, 0.8),
+            0 0 20px rgba(255, 255, 255, 0.6),
+            0 0 40px rgba(255, 255, 255, 0.4),
+            0 0 80px rgba(0, 212, 255, 0.6),
+            0 0 120px rgba(0, 212, 255, 0.4);
+        transform: scale(1);
+    }
+    100% {
+        text-shadow:
+            0 0 15px rgba(255, 255, 255, 1),
+            0 0 30px rgba(255, 255, 255, 0.8),
+            0 0 60px rgba(255, 255, 255, 0.6),
+            0 0 100px rgba(0, 212, 255, 0.8),
+            0 0 150px rgba(0, 212, 255, 0.6),
+            0 0 200px rgba(124, 58, 237, 0.4);
+        transform: scale(1.02);
+    }
+}
+
+.step-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+.text-input-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition-smooth);
+}
+
+.text-input-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: var(--glow-blue);
+}
+
+.text-input-modern {
+    width: 100%;
+    min-height: 300px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-small);
+    color: var(--text-primary);
+    font-family: var(--font-lyrics);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding: 1.5rem;
+    resize: vertical;
+    transition: var(--transition-fast);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.text-input-modern:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.text-input-modern::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+.input-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-continue {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 2rem;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-family: var(--font-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: var(--glow-blue);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-continue::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.btn-continue:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glow-blue), 0 15px 40px rgba(0, 212, 255, 0.4);
+}
+
+.btn-continue:hover::before {
+    opacity: 1;
+}
+
+.btn-arrow {
+    font-size: 1.3rem;
+    transition: var(--transition-fast);
+}
+
+.btn-continue:hover .btn-arrow {
+    transform: translateX(5px);
+}
+
+/* Prompter Step */
+.prompter-step {
+    background: var(--bg-primary);
+}
+
+/* Header pill flottant - IMPROVED SPACING */
 .header {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
     position: fixed;
-    top: 1rem;
+    top: 2rem; /* Increased top spacing */
     left: 50%;
     transform: translateX(-50%) translateY(0);
     z-index: 100;
     box-shadow: var(--glass-shadow);
     border-radius: 50px;
-    padding: 0.5rem 1rem;
+    padding: 0.8rem 1.5rem; /* Increased padding */
     transition: var(--transition-smooth);
-    max-width: 90vw;
+    max-width: 85vw; /* Reduced max width */
     width: auto;
+    margin-bottom: 1rem; /* Added margin bottom */
 }
 
 .header.hidden {
@@ -121,10 +324,33 @@ body::before {
 }
 
 .app-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #ffffff;
     white-space: nowrap;
+    letter-spacing: -0.02em;
+    text-shadow:
+        0 0 8px rgba(255, 255, 255, 0.6),
+        0 0 16px rgba(255, 255, 255, 0.4),
+        0 0 32px rgba(0, 212, 255, 0.5);
+    animation: headerGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes headerGlow {
+    0% {
+        text-shadow:
+            0 0 8px rgba(255, 255, 255, 0.6),
+            0 0 16px rgba(255, 255, 255, 0.4),
+            0 0 32px rgba(0, 212, 255, 0.5);
+    }
+    100% {
+        text-shadow:
+            0 0 12px rgba(255, 255, 255, 0.8),
+            0 0 24px rgba(255, 255, 255, 0.6),
+            0 0 48px rgba(0, 212, 255, 0.7),
+            0 0 64px rgba(124, 58, 237, 0.3);
+    }
 }
 
 .controls {
@@ -210,14 +436,9 @@ body::before {
     font-size: 1rem;
 }
 
-/* Zone de saisie du texte */
+/* Legacy text input section - now hidden */
 .text-input-section {
-    background: var(--glass-bg);
-    border-bottom: 1px solid var(--glass-border);
-    padding: 1.5rem 2rem;
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    margin-top: 6rem; /* Espace pour le header pill */
+    display: none;
 }
 
 .input-container {
@@ -262,11 +483,12 @@ body::before {
     color: var(--text-muted);
 }
 
-/* Zone principale des paroles */
+/* Zone principale des paroles - IMPROVED SPACING */
 .lyrics-container {
     flex: 1;
     background: var(--bg-primary);
     padding: 2rem;
+    padding-top: 8rem; /* Increased top padding for header spacing */
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -291,7 +513,7 @@ body::before {
     text-align: center;
     padding: 1.5rem 1rem;
     margin: 1rem 0;
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--text-secondary);
     opacity: 0.5;
     filter: blur(1px);
@@ -307,6 +529,9 @@ body::before {
     filter: blur(0);
     transform: scale(1);
     text-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 /* Lignes suivantes */
@@ -327,49 +552,26 @@ body::before {
 
 /* Système simple et fonctionnel - pas de data-distance */
 
-/* Animation des mots avec effets glow immersifs */
+/* Simplified word animation to reduce flickering */
 .word {
     display: inline;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     margin: 0 0.1em;
-}
-
-.word::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: var(--gradient-primary);
-    border-radius: var(--border-radius-small);
-    opacity: 0;
-    transition: var(--transition-glow);
-    z-index: -1;
-    filter: blur(8px);
+    position: relative;
 }
 
 .word.highlighted {
     color: #00d4ff !important;
-    text-shadow: 0 0 10px rgba(0, 212, 255, 0.8) !important;
-    font-weight: 600 !important;
-}
-
-.word.highlighted::before {
-    opacity: 0.3;
-    animation: glowPulse 1.5s ease-in-out infinite;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.6) !important;
+    font-weight: 500 !important;
+    transform: scale(1.02);
 }
 
 .word.spoken {
     color: #ff6b9d !important;
-    text-shadow: 0 0 10px rgba(255, 107, 157, 0.8) !important;
-    font-weight: 600 !important;
-}
-
-.word.spoken::before {
-    opacity: 0.5;
-    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-tertiary));
-    animation: spokenGlowBg 0.8s ease-out;
+    text-shadow: 0 0 8px rgba(255, 107, 157, 0.6) !important;
+    font-weight: 500 !important;
+    opacity: 0.9;
 }
 
 /* Animations pour les effets glow */
@@ -545,25 +747,7 @@ body::before {
     opacity: 0.3;
 }
 
-/* Animation de pulsation pour la ligne active */
-.lyric-line.active {
-    animation: activePulse 3s ease-in-out infinite;
-}
-
-@keyframes activePulse {
-    0%, 100% {
-        box-shadow: var(--glow-blue), inset 0 1px 3px rgba(255, 255, 255, 0.1);
-        border-color: var(--accent-primary);
-    }
-    33% {
-        box-shadow: var(--glow-purple), inset 0 1px 3px rgba(255, 255, 255, 0.15);
-        border-color: var(--accent-secondary);
-    }
-    66% {
-        box-shadow: var(--glow-pink), inset 0 1px 3px rgba(255, 255, 255, 0.15);
-        border-color: var(--accent-tertiary);
-    }
-}
+/* No animation on active line to avoid rectangle selection */
 
 /* Animations d'entrée */
 @keyframes fadeInUp {
@@ -584,9 +768,9 @@ body::before {
 /* Responsive */
 @media (max-width: 768px) {
     .header {
-        top: 0.5rem;
+        top: 1rem;
         max-width: 95vw;
-        padding: 0.3rem 0.5rem;
+        padding: 0.6rem 1rem;
     }
 
     .header-content {
@@ -595,7 +779,15 @@ body::before {
     }
 
     .app-title {
-        font-size: 1rem;
+        font-size: 1.1rem;
+    }
+
+    .step-title {
+        font-size: clamp(2.2rem, 8vw, 3.5rem) !important;
+        text-shadow:
+            0 0 8px rgba(255, 255, 255, 0.8),
+            0 0 16px rgba(255, 255, 255, 0.6),
+            0 0 32px rgba(0, 212, 255, 0.6) !important;
     }
 
     .control-btn {
@@ -604,9 +796,30 @@ body::before {
         gap: 0.2rem;
     }
 
-    .text-input-section {
+    .step-container {
         padding: 1rem;
-        margin-top: 5rem;
+    }
+
+    .text-input-card {
+        padding: 1.5rem;
+    }
+
+    .text-input-modern {
+        min-height: 250px;
+        font-size: 1rem;
+        padding: 1rem;
+    }
+
+    .step-title {
+        font-size: clamp(1.8rem, 6vw, 2.5rem);
+    }
+
+    .step-subtitle {
+        font-size: 1rem;
+    }
+
+    .lyrics-container {
+        padding-top: 6rem;
     }
 
     .lyric-line {
@@ -622,14 +835,12 @@ body::before {
         flex-direction: column;
         align-items: center;
     }
-
-    /* Ajustements pour mobile - styles plus simples */
 }
 
 @media (max-width: 480px) {
     .header {
-        top: 0.3rem;
-        padding: 0.2rem 0.3rem;
+        top: 0.8rem;
+        padding: 0.5rem 0.8rem;
     }
 
     .app-title {
@@ -641,17 +852,27 @@ body::before {
         font-size: 0.65rem;
     }
 
+    .text-input-card {
+        padding: 1rem;
+    }
+
+    .text-input-modern {
+        min-height: 200px;
+    }
+
+    .btn-continue {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .lyrics-container {
+        padding-top: 5rem;
+    }
+
     .lyric-line {
         font-size: clamp(1rem, 6vw, 2rem);
         max-width: 98vw;
     }
-
-    .text-input-section {
-        margin-top: 4rem;
-        padding: 0.5rem;
-    }
-
-    /* Styles simplifiés pour très petit écran */
 }
 
 /* Particules flottantes pour l'immersion */

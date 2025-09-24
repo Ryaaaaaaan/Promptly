@@ -14,16 +14,18 @@ export class VocalPrompter {
 
   private config: PrompterConfig = {
     confidenceThreshold: 0.3,
-    wordMatchThreshold: 0.6,
-    completionThreshold: 0.7,
+    wordMatchThreshold: 0.5,
+    completionThreshold: 0.6,
     scrollBehavior: 'smooth'
   };
 
   private elements: PrompterElements;
+  private currentStep: 'input' | 'prompter' = 'input';
 
   constructor() {
     this.elements = this.initializeElements();
     this.setupEventListeners();
+    this.setupStepManagement();
     this.loadDefaultText();
   }
 
@@ -33,7 +35,7 @@ export class VocalPrompter {
       stopBtn: getElement<HTMLButtonElement>('stopBtn'),
       resetBtn: getElement<HTMLButtonElement>('resetBtn'),
       textInput: getElement<HTMLTextAreaElement>('textInput'),
-      loadTextBtn: getElement<HTMLButtonElement>('loadTextBtn'),
+      loadTextBtn: getElement<HTMLButtonElement>('continueBtn'),
       lyricsContent: getElement<HTMLDivElement>('lyricsContent'),
       lyricsWrapper: getElement<HTMLDivElement>('lyricsWrapper'),
       statusText: getElement<HTMLSpanElement>('statusText'),
@@ -47,7 +49,13 @@ export class VocalPrompter {
     this.elements.startBtn.addEventListener('click', () => this.startRecognition());
     this.elements.stopBtn.addEventListener('click', () => this.stopRecognition());
     this.elements.resetBtn.addEventListener('click', () => this.resetPrompter());
-    this.elements.loadTextBtn.addEventListener('click', () => this.loadTextFromInput());
+    this.elements.loadTextBtn.addEventListener('click', () => this.continueToPrompter());
+
+    // Add edit button listener
+    const editBtn = document.getElementById('editTextBtn');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => this.backToInput());
+    }
 
     // Gestion du header disparaissant
     this.setupHeaderScroll();
@@ -98,30 +106,8 @@ export class VocalPrompter {
       }
     });
 
-    // Masquer le header quand la reconnaissance est active
-    const hideHeaderDuringRecognition = () => {
-      if (this.isRecording) {
-        header.classList.add('hidden');
-        isHeaderVisible = false;
-      } else {
-        header.classList.remove('hidden');
-        isHeaderVisible = true;
-      }
-    };
-
-    // Observer les changements d'état de recording
-    const originalStartRecognition = this.startRecognition.bind(this);
-    const originalStopRecognition = this.stopRecognition.bind(this);
-
-    this.startRecognition = async () => {
-      await originalStartRecognition();
-      setTimeout(hideHeaderDuringRecognition, 2000); // Masquer après 2s
-    };
-
-    this.stopRecognition = () => {
-      originalStopRecognition();
-      hideHeaderDuringRecognition();
-    };
+    // Header management is now simpler with better spacing
+    // No need for complex hide/show logic
   }
 
   private loadDefaultText(): void {
@@ -134,7 +120,6 @@ L'application fonctionne avec la reconnaissance vocale native du navigateur.
 Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
     this.elements.textInput.value = defaultText;
-    this.loadTextFromInput();
   }
 
   private loadTextFromInput(): void {
@@ -200,18 +185,22 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
   }
 
   private centerActiveLine(): void {
-    // Attendre que le DOM soit mis à jour puis scroll
-    setTimeout(() => {
-      const activeLine = document.querySelector('.lyric-line.active') as HTMLElement;
-      if (activeLine) {
-        console.log('Scrolling to active line:', activeLine.textContent);
-        activeLine.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
-        });
-      }
-    }, 100);
+    const activeLine = document.querySelector('.lyric-line.active') as HTMLElement;
+    if (activeLine) {
+      console.log('Scrolling to active line:', activeLine.textContent);
+
+      // Use a more reliable scrolling method
+      const container = this.elements.lyricsWrapper;
+      const containerRect = container.getBoundingClientRect();
+      const lineRect = activeLine.getBoundingClientRect();
+
+      const scrollTop = container.scrollTop + lineRect.top - containerRect.top - (containerRect.height / 2) + (lineRect.height / 2);
+
+      container.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+    }
   }
 
   // Garder l'ancienne méthode pour compatibilité mais la rediriger
@@ -221,6 +210,11 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
   private async startRecognition(): Promise<void> {
     try {
+      if (this.currentStep !== 'prompter') {
+        showMessage('Veuillez d\'abord charger un texte', 'error');
+        return;
+      }
+
       if (this.lines.length === 0) {
         showMessage('Veuillez d\'abord charger un texte', 'error');
         return;
@@ -303,7 +297,7 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
         console.log('Reconnaissance vocale démarrée');
       }
 
-      // Traitement plus fréquent pour un défilement plus réactif
+      // Reduced frequency to prevent flickering while maintaining responsiveness
       this.audioInterval = window.setInterval(() => {
         if (this.isRecording && this.recognizer) {
           const result = this.recognizer.result();
@@ -312,7 +306,7 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
             this.processRecognizedText(result.text);
           }
         }
-      }, 100); // Garder 100ms pour éviter trop de processing
+      }, 200); // Increased to 200ms to reduce flickering
 
     } catch (error) {
       console.error('Erreur microphone:', error);
@@ -343,70 +337,89 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
     console.log(`Similarité ligne ${this.currentLineIndex}:`, similarity);
 
-    if (similarity > this.config.wordMatchThreshold) {
-      this.highlightSpokenWords(currentLine, recognizedWords);
+    let needsRerender = false;
 
+    // Always highlight words that match
+    needsRerender = this.highlightMatchingWords(currentLine, recognizedWords);
+
+    if (similarity > this.config.wordMatchThreshold) {
       const completionRatio = currentLine.words.filter(w => w.spoken).length / currentLine.words.length;
       console.log(`Completion ratio: ${completionRatio}`);
 
       if (completionRatio > this.config.completionThreshold) {
         this.completeLine(this.currentLineIndex);
-      } else {
-        this.renderLyrics();
+        return; // completeLine handles its own rendering
       }
-    } else {
-      this.highlightIndividualWords(currentLine, recognizedWords);
+    }
+
+    // Only re-render if words were actually highlighted
+    if (needsRerender) {
       this.renderLyrics();
     }
   }
 
-  private highlightSpokenWords(line: Line, recognizedWords: string[]): void {
+  private highlightMatchingWords(line: Line, recognizedWords: string[]): boolean {
     console.log('Highlighting words in line:', line.text);
     console.log('Recognized words:', recognizedWords);
 
-    for (const word of line.words) {
-      if (!word.spoken) {
-        for (const recognizedWord of recognizedWords) {
-          if (wordsMatch(word.text, recognizedWord)) {
-            console.log(`Match found: "${word.text}" matched with "${recognizedWord}"`);
-            word.spoken = true;
-            word.highlighted = true;
-            break;
-          }
-        }
+    let hasChanges = false;
+
+    // Reset highlighted state for all words first
+    line.words.forEach(word => {
+      if (word.highlighted) {
+        word.highlighted = false;
+        hasChanges = true;
       }
-    }
-  }
+    });
 
-  private highlightIndividualWords(line: Line, recognizedWords: string[]): void {
-    console.log('Individual highlighting for line:', line.text);
-    line.words.forEach(word => word.highlighted = false);
-
+    // Find and highlight matching words
     for (const word of line.words) {
       for (const recognizedWord of recognizedWords) {
         if (wordsMatch(word.text, recognizedWord)) {
-          console.log(`Individual match: "${word.text}" with "${recognizedWord}"`);
-          word.highlighted = true;
+          console.log(`Match found: "${word.text}" matched with "${recognizedWord}"`);
+
+          // Mark as highlighted (temporary)
+          if (!word.highlighted) {
+            word.highlighted = true;
+            hasChanges = true;
+          }
+
+          // Mark as permanently spoken
           if (!word.spoken) {
             word.spoken = true;
+            hasChanges = true;
           }
+
           break;
         }
       }
     }
+
+    return hasChanges;
   }
 
   private completeLine(lineIndex: number): void {
     if (lineIndex < this.lines.length) {
+      // Mark current line as completed
       this.lines[lineIndex].completed = true;
       this.lines[lineIndex].active = false;
+
+      // Clear highlights from completed line to avoid flickering
+      this.lines[lineIndex].words.forEach(word => {
+        word.highlighted = false;
+      });
 
       if (lineIndex + 1 < this.lines.length) {
         this.currentLineIndex = lineIndex + 1;
         this.lines[this.currentLineIndex].active = true;
-        this.renderLyrics(); // Render avant scroll pour éviter le flicker
-        this.scrollToActiveLine();
+
+        // Render once and scroll smoothly
+        this.renderLyrics();
+        setTimeout(() => {
+          this.centerActiveLine();
+        }, 50); // Small delay to ensure DOM is updated
       } else {
+        this.renderLyrics();
         this.updateStatus('🎉 Texte terminé !');
         this.stopRecognition();
       }
@@ -517,5 +530,56 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
     console.log('Test d\'illumination avec:', testWords);
     this.processRecognizedText(testWords.join(' '));
+  }
+
+  private setupStepManagement(): void {
+    // Show input step initially
+    this.showStep('input');
+  }
+
+  private showStep(step: 'input' | 'prompter'): void {
+    const textInputStep = document.getElementById('textInputStep');
+    const prompterStep = document.getElementById('prompterStep');
+
+    if (!textInputStep || !prompterStep) return;
+
+    this.currentStep = step;
+
+    if (step === 'input') {
+      textInputStep.classList.remove('hidden');
+      prompterStep.classList.add('hidden');
+      // Focus on textarea
+      setTimeout(() => this.elements.textInput.focus(), 100);
+    } else {
+      textInputStep.classList.add('hidden');
+      prompterStep.classList.remove('hidden');
+    }
+  }
+
+  private continueToPrompter(): void {
+    const text = this.elements.textInput.value.trim();
+    if (!text) {
+      showMessage('Veuillez saisir un texte avant de continuer', 'error');
+      return;
+    }
+
+    // Load text and show prompter step
+    this.loadTextFromInput();
+    this.showStep('prompter');
+    showMessage('Texte chargé ! Vous pouvez maintenant démarrer le prompteur', 'success');
+  }
+
+  private backToInput(): void {
+    // Stop recognition if running
+    if (this.isRecording) {
+      this.stopRecognition();
+    }
+    this.showStep('input');
+    showMessage('Édition du texte', 'info');
+  }
+
+  // Public method to access current step
+  public getCurrentStep(): 'input' | 'prompter' {
+    return this.currentStep;
   }
 }
