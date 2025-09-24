@@ -13,9 +13,9 @@ export class VocalPrompter {
   private audioInterval: number | null = null;
 
   private config: PrompterConfig = {
-    confidenceThreshold: 0.3,
-    wordMatchThreshold: 0.5,
-    completionThreshold: 0.6,
+    confidenceThreshold: 0.35,
+    wordMatchThreshold: 0.4,
+    completionThreshold: 0.95,
     scrollBehavior: 'smooth'
   };
 
@@ -26,6 +26,7 @@ export class VocalPrompter {
     this.elements = this.initializeElements();
     this.setupEventListeners();
     this.setupStepManagement();
+    this.setupScrollParallax();
     this.loadDefaultText();
   }
 
@@ -180,16 +181,19 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
               </div>`;
     }).join('');
 
-    // Pas besoin de scroll car tout est centré
-    this.centerActiveLine();
+    // Enable automatic scrolling with parallax effect
+    this.scrollToActiveLineWithParallax();
   }
 
   private centerActiveLine(): void {
+    this.scrollToActiveLineWithParallax();
+  }
+
+  private scrollToActiveLineWithParallax(): void {
     const activeLine = document.querySelector('.lyric-line.active') as HTMLElement;
     if (activeLine) {
-      console.log('Scrolling to active line:', activeLine.textContent);
+      console.log('Scrolling to active line with parallax:', activeLine.textContent);
 
-      // Use a more reliable scrolling method
       const container = this.elements.lyricsWrapper;
       const containerRect = container.getBoundingClientRect();
       const lineRect = activeLine.getBoundingClientRect();
@@ -200,12 +204,95 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
         top: scrollTop,
         behavior: 'smooth'
       });
+
+      // Apply parallax effect to all lines
+      this.applyParallaxEffect();
     }
+  }
+
+  private applyParallaxEffect(): void {
+    const container = this.elements.lyricsWrapper;
+    const allLines = container.querySelectorAll('.lyric-line') as NodeListOf<HTMLElement>;
+    const containerRect = container.getBoundingClientRect();
+    const containerCenter = containerRect.height / 2;
+
+    allLines.forEach((line, index) => {
+      const lineRect = line.getBoundingClientRect();
+      const lineCenter = lineRect.top + lineRect.height / 2 - containerRect.top;
+      const distanceFromCenter = Math.abs(lineCenter - containerCenter);
+      const maxDistance = containerCenter + 100;
+      const normalizedDistance = Math.min(distanceFromCenter / maxDistance, 1);
+
+      // Skip active line to avoid interference
+      if (line.classList.contains('active')) {
+        line.style.filter = '';
+        line.style.opacity = '';
+        line.style.transform = '';
+        return;
+      }
+
+      // Apply progressive blur and fade based on distance
+      const blur = Math.min(normalizedDistance * 4, 8);
+      let opacity = Math.max(0.2, 1 - normalizedDistance * 0.7);
+      let scale = Math.max(0.7, 1 - normalizedDistance * 0.3);
+      let translateY = normalizedDistance * 15;
+
+      // Enhanced fade-out for completed lines
+      if (line.classList.contains('completed')) {
+        const completedIndex = parseInt(line.getAttribute('data-line-index') || '0');
+        const fadeIntensity = Math.min((this.currentLineIndex - completedIndex) * 0.3, 1);
+        opacity = Math.max(0.1, opacity - fadeIntensity);
+        scale = Math.max(0.6, scale - fadeIntensity * 0.2);
+        translateY += fadeIntensity * 20;
+      }
+
+      // Apply styles with GPU acceleration
+      line.style.filter = `blur(${blur}px)`;
+      line.style.opacity = opacity.toString();
+      line.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
+    });
   }
 
   // Garder l'ancienne méthode pour compatibilité mais la rediriger
   private scrollToActiveLine(): void {
     this.centerActiveLine();
+  }
+
+  private lastRenderTime = 0;
+  private lastScrollTime = 0;
+  private animationFrameId: number | null = null;
+
+  private updateWordHighlights(): void {
+    const now = Date.now();
+    // Reduced throttling for better responsiveness - render every 100ms
+    if (now - this.lastRenderTime < 100) return;
+
+    this.lastRenderTime = now;
+
+    // Use requestAnimationFrame for smooth 60fps updates
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+
+    this.animationFrameId = requestAnimationFrame(() => {
+      // Only update the specific words instead of full re-render
+      const activeLine = document.querySelector('.lyric-line.active');
+      if (activeLine) {
+        const words = activeLine.querySelectorAll('.word');
+        const currentLine = this.lines[this.currentLineIndex];
+
+        words.forEach((wordEl, index) => {
+          const word = currentLine.words[index];
+          if (word) {
+            wordEl.className = `word ${word.spoken ? 'spoken' : ''} ${word.highlighted ? 'highlighted' : ''}`;
+          }
+        });
+      }
+
+      // Apply continuous parallax effect at 60fps
+      this.applyParallaxEffect();
+      this.animationFrameId = null;
+    });
   }
 
   private async startRecognition(): Promise<void> {
@@ -297,7 +384,7 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
         console.log('Reconnaissance vocale démarrée');
       }
 
-      // Reduced frequency to prevent flickering while maintaining responsiveness
+      // Optimized frequency for better responsiveness while avoiding flickering
       this.audioInterval = window.setInterval(() => {
         if (this.isRecording && this.recognizer) {
           const result = this.recognizer.result();
@@ -306,7 +393,7 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
             this.processRecognizedText(result.text);
           }
         }
-      }, 200); // Increased to 200ms to reduce flickering
+      }, 150); // Reduced to 150ms for better responsiveness
 
     } catch (error) {
       console.error('Erreur microphone:', error);
@@ -339,32 +426,37 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
     let needsRerender = false;
 
-    // Always highlight words that match
-    needsRerender = this.highlightMatchingWords(currentLine, recognizedWords);
+    // Only highlight and mark words sequentially
+    needsRerender = this.highlightMatchingWordsSequentially(currentLine, recognizedWords);
 
     if (similarity > this.config.wordMatchThreshold) {
-      const completionRatio = currentLine.words.filter(w => w.spoken).length / currentLine.words.length;
-      console.log(`Completion ratio: ${completionRatio}`);
+      const spokenWordsCount = currentLine.words.filter(w => w.spoken).length;
+      const totalWordsCount = currentLine.words.length;
+      const completionRatio = spokenWordsCount / totalWordsCount;
 
-      if (completionRatio > this.config.completionThreshold) {
+      console.log(`Completion ratio: ${completionRatio} (${spokenWordsCount}/${totalWordsCount})`);
+
+      // Only complete line when ALL words are spoken (100% completion)
+      if (completionRatio >= 1.0) {
+        console.log('Line completed - all words spoken');
         this.completeLine(this.currentLineIndex);
         return; // completeLine handles its own rendering
       }
     }
 
-    // Only re-render if words were actually highlighted
+    // Only re-render if words were actually highlighted and limit frequency
     if (needsRerender) {
-      this.renderLyrics();
+      this.updateWordHighlights();
     }
   }
 
-  private highlightMatchingWords(line: Line, recognizedWords: string[]): boolean {
-    console.log('Highlighting words in line:', line.text);
+  private highlightMatchingWordsSequentially(line: Line, recognizedWords: string[]): boolean {
+    console.log('Highlighting words sequentially in line:', line.text);
     console.log('Recognized words:', recognizedWords);
 
     let hasChanges = false;
 
-    // Reset highlighted state for all words first
+    // Reset all highlighted states first
     line.words.forEach(word => {
       if (word.highlighted) {
         word.highlighted = false;
@@ -372,26 +464,20 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
       }
     });
 
-    // Find and highlight matching words
-    for (const word of line.words) {
-      for (const recognizedWord of recognizedWords) {
-        if (wordsMatch(word.text, recognizedWord)) {
-          console.log(`Match found: "${word.text}" matched with "${recognizedWord}"`);
+    // Find the next word to be spoken (first unspoken word in order)
+    const nextWordIndex = line.words.findIndex(word => !word.spoken);
+    if (nextWordIndex === -1) return hasChanges; // All words already spoken
 
-          // Mark as highlighted (temporary)
-          if (!word.highlighted) {
-            word.highlighted = true;
-            hasChanges = true;
-          }
+    const nextWord = line.words[nextWordIndex];
 
-          // Mark as permanently spoken
-          if (!word.spoken) {
-            word.spoken = true;
-            hasChanges = true;
-          }
-
-          break;
-        }
+    // Only highlight and mark the next word if it matches current recognition
+    for (const recognizedWord of recognizedWords) {
+      if (wordsMatch(nextWord.text, recognizedWord)) {
+        console.log(`Sequential match found: "${nextWord.text}" (position ${nextWordIndex}) matched with "${recognizedWord}"`);
+        nextWord.highlighted = true;
+        nextWord.spoken = true;
+        hasChanges = true;
+        break;
       }
     }
 
@@ -413,10 +499,10 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
         this.currentLineIndex = lineIndex + 1;
         this.lines[this.currentLineIndex].active = true;
 
-        // Render once and scroll smoothly
+        // Render once and scroll smoothly with parallax
         this.renderLyrics();
         setTimeout(() => {
-          this.centerActiveLine();
+          this.scrollToActiveLineWithParallax();
         }, 50); // Small delay to ensure DOM is updated
       } else {
         this.renderLyrics();
@@ -581,5 +667,28 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
   // Public method to access current step
   public getCurrentStep(): 'input' | 'prompter' {
     return this.currentStep;
+  }
+
+  private scrollAnimationFrameId: number | null = null;
+
+  private setupScrollParallax(): void {
+    // High-performance scroll listener using requestAnimationFrame
+    const handleScroll = () => {
+      if (this.scrollAnimationFrameId) {
+        cancelAnimationFrame(this.scrollAnimationFrameId);
+      }
+
+      this.scrollAnimationFrameId = requestAnimationFrame(() => {
+        if (this.currentStep === 'prompter') {
+          this.applyParallaxEffect();
+        }
+        this.scrollAnimationFrameId = null;
+      });
+    };
+
+    // Listen for scroll events on the lyrics wrapper
+    if (this.elements.lyricsWrapper) {
+      this.elements.lyricsWrapper.addEventListener('scroll', handleScroll, { passive: true });
+    }
   }
 }

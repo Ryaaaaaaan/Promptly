@@ -11,11 +11,12 @@
     --text-secondary: rgba(255, 255, 255, 0.8);
     --text-muted: rgba(255, 255, 255, 0.5);
 
-    --accent-primary: #00d4ff;
-    --accent-secondary: #7c3aed;
-    --accent-tertiary: #f472b6;
+    --accent-primary: #00ffd4;
+    --accent-secondary: #00b4d8;
+    --accent-tertiary: #48cae4;
 
-    --glow-blue: 0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 212, 255, 0.4), 0 0 60px rgba(0, 212, 255, 0.2);
+    --glow-blue: 0 0 20px rgba(0, 255, 212, 0.6), 0 0 40px rgba(0, 255, 212, 0.4), 0 0 60px rgba(0, 255, 212, 0.2);
+    --glow-intense: 0 0 10px rgba(0, 255, 212, 0.8), 0 0 20px rgba(0, 255, 212, 0.6), 0 0 40px rgba(0, 255, 212, 0.4), 0 0 80px rgba(0, 255, 212, 0.2);
     --glow-purple: 0 0 20px rgba(124, 58, 237, 0.6), 0 0 40px rgba(124, 58, 237, 0.4), 0 0 60px rgba(124, 58, 237, 0.2);
     --glow-pink: 0 0 20px rgba(244, 114, 182, 0.6), 0 0 40px rgba(244, 114, 182, 0.4), 0 0 60px rgba(244, 114, 182, 0.2);
 
@@ -27,8 +28,8 @@
 
     --border-radius: 20px;
     --border-radius-small: 12px;
-    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-glow: all 0.3s ease-out;
 }
 
@@ -160,8 +161,8 @@ body::before {
             0 0 10px rgba(255, 255, 255, 0.8),
             0 0 20px rgba(255, 255, 255, 0.6),
             0 0 40px rgba(255, 255, 255, 0.4),
-            0 0 80px rgba(0, 212, 255, 0.6),
-            0 0 120px rgba(0, 212, 255, 0.4);
+            0 0 80px rgba(0, 255, 212, 0.6),
+            0 0 120px rgba(0, 255, 212, 0.4);
         transform: scale(1);
     }
     100% {
@@ -169,9 +170,9 @@ body::before {
             0 0 15px rgba(255, 255, 255, 1),
             0 0 30px rgba(255, 255, 255, 0.8),
             0 0 60px rgba(255, 255, 255, 0.6),
-            0 0 100px rgba(0, 212, 255, 0.8),
-            0 0 150px rgba(0, 212, 255, 0.6),
-            0 0 200px rgba(124, 58, 237, 0.4);
+            0 0 100px rgba(0, 255, 212, 0.8),
+            0 0 150px rgba(0, 255, 212, 0.6),
+            0 0 200px rgba(0, 180, 216, 0.4);
         transform: scale(1.02);
     }
 }
@@ -497,6 +498,11 @@ body::before {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    position: relative;
 }
 
 .lyrics-content {
@@ -504,74 +510,143 @@ body::before {
     padding: 2rem 0;
 }
 
-/* Styles des lignes de paroles */
+/* Styles des lignes de paroles avec parallaxe */
 .lyric-line {
     font-family: var(--font-lyrics);
     font-size: clamp(1.2rem, 3vw, 2.5rem);
     font-weight: 400;
     line-height: 1.6;
     text-align: center;
-    padding: 1.5rem 1rem;
-    margin: 1rem 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 2rem 1rem;
+    margin: 2rem 0;
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--text-secondary);
     opacity: 0.5;
     filter: blur(1px);
     transform: scale(0.95);
+    will-change: transform, opacity, filter;
 }
 
-/* Ligne active */
+/* Ligne active avec effet focus */
 .lyric-line.active {
     color: var(--text-primary);
     opacity: 1;
     font-weight: 600;
     font-size: clamp(1.4rem, 3.5vw, 2.8rem);
-    filter: blur(0);
-    transform: scale(1);
-    text-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+    filter: blur(0) !important;
+    transform: scale(1) !important;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 212, 255, 0.4);
     background: transparent;
     border: none;
     box-shadow: none;
+    z-index: 10;
+    position: relative;
 }
 
-/* Lignes suivantes */
+/* Lignes suivantes avec perspective */
 .lyric-line.inactive {
-    color: var(--text-secondary);
-    opacity: 0.4;
+    color: var(--text-muted);
+    opacity: 0.6;
     filter: blur(1.5px);
-    transform: scale(0.9);
+    transform: scale(0.9) translateY(-5px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Lignes précédentes */
+/* Lignes précédentes avec fade-out progressif */
 .lyric-line.completed {
-    color: var(--text-primary);
-    opacity: 1;
-    filter: blur(0);
-    transform: scale(0.95);
+    color: var(--text-secondary);
+    opacity: 0.3;
+    filter: blur(2px);
+    transform: scale(0.85) translateY(10px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Système simple et fonctionnel - pas de data-distance */
 
-/* Simplified word animation to reduce flickering */
+/* High-performance word animation at 60fps */
 .word {
     display: inline;
-    transition: all 0.2s ease;
+    transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0 0.1em;
     position: relative;
+    will-change: color, text-shadow, transform;
 }
 
 .word.highlighted {
-    color: #00d4ff !important;
-    text-shadow: 0 0 8px rgba(0, 212, 255, 0.6) !important;
-    font-weight: 500 !important;
-    transform: scale(1.02);
+    color: #00ffd4 !important;
+    text-shadow: var(--glow-intense) !important;
+    font-weight: 600 !important;
+    transform: scale(1.05);
+    animation: highlightGlow 0.6s ease-in-out infinite alternate;
+    position: relative;
+    z-index: 5;
+}
+
+.word.highlighted::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -10px;
+    right: -10px;
+    bottom: -5px;
+    background: radial-gradient(ellipse, rgba(0, 255, 212, 0.3) 0%, rgba(0, 255, 212, 0.1) 50%, transparent 70%);
+    border-radius: 8px;
+    z-index: -1;
+    animation: glowPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes highlightGlow {
+    0% {
+        transform: scale(1.05);
+        text-shadow:
+            0 0 10px rgba(0, 255, 212, 0.8),
+            0 0 20px rgba(0, 255, 212, 0.6),
+            0 0 40px rgba(0, 255, 212, 0.4);
+    }
+    100% {
+        transform: scale(1.08);
+        text-shadow:
+            0 0 15px rgba(0, 255, 212, 1),
+            0 0 30px rgba(0, 255, 212, 0.8),
+            0 0 60px rgba(0, 255, 212, 0.6),
+            0 0 100px rgba(0, 255, 212, 0.4);
+    }
+}
+
+@keyframes glowPulse {
+    0% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
 }
 
 .word.spoken {
-    color: #ff6b9d !important;
-    text-shadow: 0 0 8px rgba(255, 107, 157, 0.6) !important;
+    color: #48cae4 !important;
+    text-shadow: 0 0 8px rgba(72, 202, 228, 0.6) !important;
     font-weight: 500 !important;
-    opacity: 0.9;
+    opacity: 0.8;
+    animation: spokenConfirm 0.4s ease-out;
+}
+
+@keyframes spokenConfirm {
+    0% {
+        transform: scale(1.05);
+        text-shadow: 0 0 15px rgba(0, 255, 212, 1);
+        color: #00ffd4;
+    }
+    30% {
+        transform: scale(1.1);
+        text-shadow: 0 0 20px rgba(0, 255, 212, 0.8);
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 0 8px rgba(72, 202, 228, 0.6);
+        color: #48cae4;
+    }
 }
 
 /* Animations pour les effets glow */
