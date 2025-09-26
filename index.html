@@ -3,101 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Promptly - Voice Prompter</title>
+    <title>Promptly - Prompteur Vocal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 </head>
 <body>
     <div id="app">
-        <!-- Text Input Step -->
-        <div id="textInputStep" class="step text-input-step">
-            <div class="step-container">
-                <div class="step-header">
-                    <h1 class="step-title">Promptly</h1>
-                    <p class="step-subtitle">Collez votre texte et commencez à pratiquer</p>
-                </div>
-
-                <div class="text-input-card">
-                    <textarea
-                        id="textInput"
-                        class="text-input-modern"
-                        placeholder="Collez votre texte ici...\nChaque ligne sera une phrase à suivre."
-                        rows="12"
-                    ></textarea>
-
-                    <div class="input-actions">
-                        <button id="continueBtn" class="btn-continue">
-                            <span>Continuer</span>
-                            <span class="btn-arrow">→</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Prompter Step -->
-        <div id="prompterStep" class="step prompter-step hidden">
-            <!-- Header avec contrôles -->
-            <header class="header">
-                <div class="header-content">
-                    <h1 class="app-title">Promptly</h1>
-                    <div class="controls">
-                        <button id="editTextBtn" class="control-btn secondary">
-                            <span class="btn-icon">📝</span>
-                            Éditer
-                        </button>
-                        <button id="startBtn" class="control-btn primary">
-                            <span class="btn-icon">🎤</span>
-                            Démarrer
-                        </button>
-                        <button id="stopBtn" class="control-btn secondary" disabled>
-                            <span class="btn-icon">⏹</span>
-                            Arrêter
-                        </button>
-                        <button id="resetBtn" class="control-btn secondary">
-                            <span class="btn-icon">🔄</span>
-                            Reset
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Zone principale d'affichage des paroles -->
-            <main class="lyrics-container">
-                <div class="lyrics-wrapper" id="lyricsWrapper">
-                    <div class="lyrics-content" id="lyricsContent">
-                        <div class="empty-state">
-                            📝 Chargez un texte pour commencer
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <!-- Zone de status et debug -->
-            <div class="status-section">
-                <div class="status-item">
-                    <span class="status-label">Status:</span>
-                    <span id="statusText" class="status-value">Prêt</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Reconnaissance:</span>
-                    <span id="recognitionText" class="status-value">En attente...</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Ligne actuelle:</span>
-                    <span id="currentLineNumber" class="status-value">0/0</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Overlay de chargement -->
-        <div id="loadingOverlay" class="loading-overlay hidden">
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <p class="loading-text">Initialisation de la reconnaissance vocale...</p>
-            </div>
-        </div>
+        <!-- Le contenu sera géré dynamiquement par le Router -->
     </div>
 
     <script type="module" src="/src/main.ts"></script>
