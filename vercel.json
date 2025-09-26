@@ -1,0 +1,32 @@
+{
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "cross-origin"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "cross-origin"
+        }
+      ]
+    }
+  ]
+}

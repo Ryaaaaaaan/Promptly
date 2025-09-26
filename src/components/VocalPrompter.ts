@@ -15,7 +15,7 @@ export class VocalPrompter {
   private config: PrompterConfig = {
     confidenceThreshold: 0.35,
     wordMatchThreshold: 0.4,
-    completionThreshold: 0.95,
+    completionThreshold: 0.75, // Reduced to 75% for better user experience
     scrollBehavior: 'smooth'
   };
 
@@ -112,13 +112,13 @@ export class VocalPrompter {
   }
 
   private loadDefaultText(): void {
-    const defaultText = `Bonjour et bienvenue dans ce prompteur vocal intelligent.
-Cette application vous permet de suivre un texte en temps réel grâce à la reconnaissance vocale.
-Chaque ligne s'illumine au fur et à mesure que vous la prononcez.
-Les mots sont mis en surbrillance individuellement pour un suivi précis.
-Vous pouvez personnaliser le texte dans la zone de saisie ci-dessus.
-L'application fonctionne avec la reconnaissance vocale native du navigateur.
-Profitez de cette expérience fluide et réactive pour vos présentations.`;
+    const defaultText = `Bonjour et bienvenue dans ce prompteur vocal.
+Cette application suit votre voix en temps réel.
+Chaque ligne s'illumine quand vous la prononcez.
+Les mots se colorent individuellement pour un suivi précis.
+Vous pouvez modifier ce texte comme vous le souhaitez.
+Le prompteur fonctionne avec votre microphone.
+Profitez de cette expérience fluide pour vos présentations.`;
 
     this.elements.textInput.value = defaultText;
   }
@@ -185,14 +185,11 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
     this.scrollToActiveLineWithParallax();
   }
 
-  private centerActiveLine(): void {
-    this.scrollToActiveLineWithParallax();
-  }
 
   private scrollToActiveLineWithParallax(): void {
     const activeLine = document.querySelector('.lyric-line.active') as HTMLElement;
     if (activeLine) {
-      console.log('Scrolling to active line with parallax:', activeLine.textContent);
+      console.log('Scrolling to active line:', activeLine.textContent);
 
       const container = this.elements.lyricsWrapper;
       const containerRect = container.getBoundingClientRect();
@@ -200,99 +197,56 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
       const scrollTop = container.scrollTop + lineRect.top - containerRect.top - (containerRect.height / 2) + (lineRect.height / 2);
 
+      // Use native smooth scrolling for best performance
       container.scrollTo({
         top: scrollTop,
         behavior: 'smooth'
       });
 
-      // Apply parallax effect to all lines
-      this.applyParallaxEffect();
+      // Apply simple parallax effect after scroll
+      setTimeout(() => this.applyParallaxEffect(), 100);
     }
   }
 
   private applyParallaxEffect(): void {
+    // Simplified, performance-optimized parallax
     const container = this.elements.lyricsWrapper;
     const allLines = container.querySelectorAll('.lyric-line') as NodeListOf<HTMLElement>;
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.height / 2;
 
-    allLines.forEach((line, index) => {
-      const lineRect = line.getBoundingClientRect();
-      const lineCenter = lineRect.top + lineRect.height / 2 - containerRect.top;
-      const distanceFromCenter = Math.abs(lineCenter - containerCenter);
-      const maxDistance = containerCenter + 100;
-      const normalizedDistance = Math.min(distanceFromCenter / maxDistance, 1);
-
+    allLines.forEach((line) => {
       // Skip active line to avoid interference
       if (line.classList.contains('active')) {
-        line.style.filter = '';
-        line.style.opacity = '';
+        line.style.opacity = '1';
         line.style.transform = '';
         return;
       }
 
-      // Apply progressive blur and fade based on distance
-      const blur = Math.min(normalizedDistance * 4, 8);
-      let opacity = Math.max(0.2, 1 - normalizedDistance * 0.7);
-      let scale = Math.max(0.7, 1 - normalizedDistance * 0.3);
-      let translateY = normalizedDistance * 15;
-
-      // Enhanced fade-out for completed lines
+      // Simple opacity-based fade for inactive lines
       if (line.classList.contains('completed')) {
-        const completedIndex = parseInt(line.getAttribute('data-line-index') || '0');
-        const fadeIntensity = Math.min((this.currentLineIndex - completedIndex) * 0.3, 1);
-        opacity = Math.max(0.1, opacity - fadeIntensity);
-        scale = Math.max(0.6, scale - fadeIntensity * 0.2);
-        translateY += fadeIntensity * 20;
+        line.style.opacity = '0.4';
+      } else {
+        line.style.opacity = '0.6';
       }
-
-      // Apply styles with GPU acceleration
-      line.style.filter = `blur(${blur}px)`;
-      line.style.opacity = opacity.toString();
-      line.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
     });
   }
-
-  // Garder l'ancienne méthode pour compatibilité mais la rediriger
-  private scrollToActiveLine(): void {
-    this.centerActiveLine();
-  }
-
-  private lastRenderTime = 0;
-  private lastScrollTime = 0;
-  private animationFrameId: number | null = null;
 
   private updateWordHighlights(): void {
-    const now = Date.now();
-    // Reduced throttling for better responsiveness - render every 100ms
-    if (now - this.lastRenderTime < 100) return;
+    // Direct DOM update without throttling for maximum responsiveness
+    const activeLine = document.querySelector('.lyric-line.active');
+    if (activeLine) {
+      const words = activeLine.querySelectorAll('.word');
+      const currentLine = this.lines[this.currentLineIndex];
 
-    this.lastRenderTime = now;
-
-    // Use requestAnimationFrame for smooth 60fps updates
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
+      words.forEach((wordEl, index) => {
+        const word = currentLine.words[index];
+        if (word) {
+          wordEl.className = `word ${word.spoken ? 'spoken' : ''} ${word.highlighted ? 'highlighted' : ''}`;
+        }
+      });
     }
 
-    this.animationFrameId = requestAnimationFrame(() => {
-      // Only update the specific words instead of full re-render
-      const activeLine = document.querySelector('.lyric-line.active');
-      if (activeLine) {
-        const words = activeLine.querySelectorAll('.word');
-        const currentLine = this.lines[this.currentLineIndex];
-
-        words.forEach((wordEl, index) => {
-          const word = currentLine.words[index];
-          if (word) {
-            wordEl.className = `word ${word.spoken ? 'spoken' : ''} ${word.highlighted ? 'highlighted' : ''}`;
-          }
-        });
-      }
-
-      // Apply continuous parallax effect at 60fps
-      this.applyParallaxEffect();
-      this.animationFrameId = null;
-    });
+    // Apply simple parallax effect
+    this.applyParallaxEffect();
   }
 
   private async startRecognition(): Promise<void> {
@@ -393,7 +347,7 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
             this.processRecognizedText(result.text);
           }
         }
-      }, 150); // Reduced to 150ms for better responsiveness
+      }, 100); // Back to faster frequency for real-time feel
 
     } catch (error) {
       console.error('Erreur microphone:', error);
@@ -436,9 +390,9 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
 
       console.log(`Completion ratio: ${completionRatio} (${spokenWordsCount}/${totalWordsCount})`);
 
-      // Only complete line when ALL words are spoken (100% completion)
-      if (completionRatio >= 1.0) {
-        console.log('Line completed - all words spoken');
+      // Complete line when enough words are spoken (using configured threshold)
+      if (completionRatio >= this.config.completionThreshold) {
+        console.log(`Line completed - ${completionRatio * 100}% of words spoken (threshold: ${this.config.completionThreshold * 100}%)`);
         this.completeLine(this.currentLineIndex);
         return; // completeLine handles its own rendering
       }
@@ -464,20 +418,21 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
       }
     });
 
-    // Find the next word to be spoken (first unspoken word in order)
+    // STRICT sequential approach - only the next word in order
     const nextWordIndex = line.words.findIndex(word => !word.spoken);
-    if (nextWordIndex === -1) return hasChanges; // All words already spoken
 
-    const nextWord = line.words[nextWordIndex];
+    if (nextWordIndex !== -1) {
+      const nextWord = line.words[nextWordIndex];
 
-    // Only highlight and mark the next word if it matches current recognition
-    for (const recognizedWord of recognizedWords) {
-      if (wordsMatch(nextWord.text, recognizedWord)) {
-        console.log(`Sequential match found: "${nextWord.text}" (position ${nextWordIndex}) matched with "${recognizedWord}"`);
-        nextWord.highlighted = true;
-        nextWord.spoken = true;
-        hasChanges = true;
-        break;
+      // Check if any recognized word matches the EXACT next word
+      for (const recognizedWord of recognizedWords) {
+        if (wordsMatch(nextWord.text, recognizedWord)) {
+          console.log(`Sequential match: "${nextWord.text}" (position ${nextWordIndex}) matched with "${recognizedWord}"`);
+          nextWord.highlighted = true;
+          nextWord.spoken = true;
+          hasChanges = true;
+          break; // Only match the first correct word
+        }
       }
     }
 
@@ -611,11 +566,35 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
       return;
     }
 
-    const currentLine = this.lines[this.currentLineIndex];
     const testWords = ['bonjour', 'et', 'bienvenue', 'dans', 'ce'];
 
     console.log('Test d\'illumination avec:', testWords);
     this.processRecognizedText(testWords.join(' '));
+  }
+
+  // Méthode de test pour simuler la progression ligne par ligne
+  public simulateLineCompletion(): void {
+    if (this.lines.length === 0) {
+      console.log('Aucun texte chargé pour la simulation');
+      return;
+    }
+
+    if (this.currentLineIndex >= this.lines.length) {
+      console.log('Toutes les lignes sont déjà complétées');
+      return;
+    }
+
+    const currentLine = this.lines[this.currentLineIndex];
+    console.log(`Simulation de la ligne ${this.currentLineIndex + 1}: "${currentLine.text}"`);
+
+    // Marquer tous les mots comme prononcés
+    currentLine.words.forEach(word => {
+      word.spoken = true;
+      word.highlighted = false;
+    });
+
+    // Compléter la ligne
+    this.completeLine(this.currentLineIndex);
   }
 
   private setupStepManagement(): void {
@@ -669,21 +648,12 @@ Profitez de cette expérience fluide et réactive pour vos présentations.`;
     return this.currentStep;
   }
 
-  private scrollAnimationFrameId: number | null = null;
-
   private setupScrollParallax(): void {
-    // High-performance scroll listener using requestAnimationFrame
+    // Simplified scroll listener - no throttling for best responsiveness
     const handleScroll = () => {
-      if (this.scrollAnimationFrameId) {
-        cancelAnimationFrame(this.scrollAnimationFrameId);
+      if (this.currentStep === 'prompter') {
+        this.applyParallaxEffect();
       }
-
-      this.scrollAnimationFrameId = requestAnimationFrame(() => {
-        if (this.currentStep === 'prompter') {
-          this.applyParallaxEffect();
-        }
-        this.scrollAnimationFrameId = null;
-      });
     };
 
     // Listen for scroll events on the lyrics wrapper

@@ -62,22 +62,8 @@ function showLandingPage(container: HTMLElement) {
             </div>
           </div>
 
-          <div class="benefits-section animate__animated animate__fadeIn animate__delay-2s">
-            <h3 class="benefits-title">Pourquoi choisir Promptly ?</h3>
-            <div class="benefits-horizontal">
-              <div class="benefit-item animate__animated animate__fadeInLeft animate__delay-2500ms">
-                <span class="benefit-text">🎯 Suivi vocal temps réel</span>
-              </div>
-              <div class="benefit-item animate__animated animate__fadeIn animate__delay-3s">
-                <span class="benefit-text">⚡ Démarrage instantané</span>
-              </div>
-              <div class="benefit-item animate__animated animate__fadeInRight animate__delay-3500ms">
-                <span class="benefit-text">🎨 Interface immersive</span>
-              </div>
-            </div>
-          </div>
 
-          <div class="cta-section animate__animated animate__bounceIn animate__delay-4s">
+          <div class="cta-section animate__animated animate__bounceIn animate__delay-2s">
             <div class="cta-group">
               <button id="startAppBtn" class="cta-primary">
                 <span class="cta-icon">🚀</span>
@@ -106,14 +92,14 @@ function showLandingPage(container: HTMLElement) {
 }
 
 function slideToApp(container: HTMLElement) {
-  // Animation de transition
+  // Animation de transition fade avec parallaxe
   const landingStep = container.querySelector('.landing-step');
   if (landingStep) {
-    landingStep.classList.add('slide-out');
+    landingStep.classList.add('fade-out');
 
     setTimeout(() => {
       showApp(container);
-    }, 500);
+    }, 600);
   }
 }
 
@@ -122,7 +108,7 @@ function showApp(container: HTMLElement) {
 
   container.innerHTML = `
     <!-- Text Input Step -->
-    <div id="textInputStep" class="step text-input-step slide-in">
+    <div id="textInputStep" class="step text-input-step fade-in">
       <div class="step-container">
         <div class="step-header">
           <h1 class="step-title">Promptly</h1>
@@ -267,10 +253,10 @@ function showError(error: Error) {
   // Animation de sortie puis retour à la landing
   const currentStep = appContainer.querySelector('.step:not(.hidden)');
   if (currentStep) {
-    currentStep.classList.add('slide-out');
+    currentStep.classList.add('fade-out');
     setTimeout(() => {
       showLandingPage(appContainer);
-    }, 300);
+    }, 400);
   } else {
     showLandingPage(appContainer);
   }
